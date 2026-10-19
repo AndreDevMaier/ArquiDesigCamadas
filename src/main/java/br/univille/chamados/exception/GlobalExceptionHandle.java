@@ -1,4 +1,4 @@
-package br.univille.chamados.expection;
+package br.univille.chamados.exception;
 
 import java.time.LocalDateTime;
 import java.util.List;

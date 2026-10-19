@@ -1,4 +1,4 @@
-package br.univille.chamados.expection;
+package br.univille.chamados.exception;
 
 /**Lançada quando um recurso procurado não existe (vira HTTP 404).*/
 

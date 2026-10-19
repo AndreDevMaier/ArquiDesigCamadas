@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import br.univille.chamados.dto.ClienteRequest;
 import br.univille.chamados.dto.ClienteResponse;
 import br.univille.chamados.service.ClienteService;
-import jakarta.validation.Valid;    
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/cliente")
@@ -27,29 +27,31 @@ public class ClienteController {
     public ClienteController(ClienteService service) {
         this.service = service;
     }
-    @PostMapping
-    public ResponseEntity<ClienteResponse>criar (
-    @Valid @RequestBody ClienteRequest dto) {
-    ClienteResponse criado = service.criar(dto);
-    return ResponseEntity.created(URI.create("/clientes/" + criado.id())). body(criado);
 
+    @PostMapping
+    public ResponseEntity<ClienteResponse> criar(@Valid @RequestBody ClienteRequest dto) {
+        ClienteResponse criado = service.criar(dto);
+        return ResponseEntity.created(URI.create("/cliente/" + criado.id())).body(criado);
     }
+
     @GetMapping
     public List<ClienteResponse> listar() {
         return service.listar();
     }
+
     @GetMapping("/{id}")
     public ClienteResponse buscar(@PathVariable Long id) {
         return service.buscar(id);
     }
+
     @PutMapping("/{id}")
-    public br.univille.chamados.dto.ClienteResponse atualizar (
-        @PathVariable Long id,
-        @Valid @RequestBody ClienteRequest dto) {
+    public ClienteResponse atualizar(@PathVariable Long id,
+                                     @Valid @RequestBody ClienteRequest dto) {
         return service.atualizar(id, dto);
-        }
+    }
+
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> excluir (@PathVariable Long id) {
+    public ResponseEntity<Void> excluir(@PathVariable Long id) {
         service.excluir(id);
         return ResponseEntity.noContent().build();
     }

@@ -8,20 +8,20 @@ import org.springframework.transaction.annotation.Transactional;
 import br.univille.chamados.dto.ClienteRequest;
 import br.univille.chamados.dto.ClienteResponse;
 import br.univille.chamados.entity.Cliente;
-import br.univille.chamados.exception.RecursoNaoEncontradoException;
+import br.univille.chamados.exception.RecursoNaoEncontrado;
 import br.univille.chamados.exception.RegraNegocioException;
 import br.univille.chamados.repository.ClienteRepository;
 
 @Service
-
 public class ClienteService {
+    
     private final ClienteRepository repository;
 
     public ClienteService(ClienteRepository repository) {
         this.repository = repository;
     }
     @Transactional
-    public ClienteResponse cliente(br.univille.chamados.dto.ClienteRequest dto) {
+    public ClienteResponse criar(ClienteRequest dto) {
         if (repository.existsByEmail(dto.email())) {
             throw new RegraNegocioException ("Ja existe cliente com o e-mail" + dto.email());
         }
@@ -30,7 +30,11 @@ public class ClienteService {
     }
     @Transactional(readOnly = true)
         public List<ClienteResponse> listar() {
-        return repository.findAll().stream().map(ClienteResponse::de).toList;
+        return repository.findAll().stream().map(ClienteResponse::de).toList();
+    }
+    @Transactional (readOnly = true)
+    public ClienteResponse buscar(Long id) {
+        return ClienteResponse.de(buscarEntity(id));
     }
     @Transactional
     public ClienteResponse atualizar(Long id, br.univille.chamados.dto.ClienteRequest dto) {
@@ -49,7 +53,7 @@ public class ClienteService {
     }
     private Cliente buscarEntity(Long id) {
         return repository.findById(id)
-        .orElseThrow(() -> new RecursoNaoEncontradoException(
+        .orElseThrow(() -> new RecursoNaoEncontrado(
             "Cliente" + id + "não encontrado"));
     
     }

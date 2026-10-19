@@ -1,4 +1,4 @@
-package br.univille.chamados.expection;
+package br.univille.chamados.exception;
 
 /**Lançada quando uma regra de negócio é violada (vira HTTP 400).*/
 public class RegraNegocioException extends RuntimeException {
