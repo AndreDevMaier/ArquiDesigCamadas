@@ -1,4 +1,4 @@
-package br.univille.chamados.controller;
+package br.com.sistemas.chamados.controller;
 
 import java.net.URI;
 import java.util.List;
@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.univille.chamados.dto.ClienteRequest;
-import br.univille.chamados.dto.ClienteResponse;
-import br.univille.chamados.service.ClienteService;
+import br.com.sistemas.chamados.dto.ClienteRequest;
+import br.com.sistemas.chamados.dto.ClienteResponse;
+import br.com.sistemas.chamados.service.ClienteService;
 import jakarta.validation.Valid;
 
 @RestController

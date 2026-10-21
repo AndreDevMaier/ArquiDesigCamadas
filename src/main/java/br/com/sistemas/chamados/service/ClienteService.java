@@ -1,16 +1,16 @@
-package br.univille.chamados.service;
+package br.com.sistemas.chamados.service;
 
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import br.univille.chamados.dto.ClienteRequest;
-import br.univille.chamados.dto.ClienteResponse;
-import br.univille.chamados.entity.Cliente;
-import br.univille.chamados.exception.RecursoNaoEncontrado;
-import br.univille.chamados.exception.RegraNegocioException;
-import br.univille.chamados.repository.ClienteRepository;
+import br.com.sistemas.chamados.dto.ClienteRequest;
+import br.com.sistemas.chamados.dto.ClienteResponse;
+import br.com.sistemas.chamados.entity.Cliente;
+import br.com.sistemas.chamados.exception.RecursoNaoEncontrado;
+import br.com.sistemas.chamados.exception.RegraNegocioException;
+import br.com.sistemas.chamados.repository.ClienteRepository;
 
 @Service
 public class ClienteService {
@@ -37,7 +37,7 @@ public class ClienteService {
         return ClienteResponse.de(buscarEntity(id));
     }
     @Transactional
-    public ClienteResponse atualizar(Long id, br.univille.chamados.dto.ClienteRequest dto) {
+    public ClienteResponse atualizar(Long id, br.com.sistemas.chamados.dto.ClienteRequest dto) {
         Cliente cliente = buscarEntity(id);
         if (repository.existsByEmailAndIdNot(dto.email(), id)) {
             throw new RegraNegocioException("Já existe cliente com o e-mail" + dto.email());

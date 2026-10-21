@@ -1,4 +1,4 @@
-package br.univille.chamados.entity;
+package br.com.sistemas.chamados.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
