@@ -19,8 +19,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.sistemas.chamados.dto.AlterarStatusRequest;
 import br.com.sistemas.chamados.dto.AtribuirTecnicoRequest;
+import br.com.sistemas.chamados.dto.ChamadoDetalheResponse;
 import br.com.sistemas.chamados.dto.ChamadoRequest;
 import br.com.sistemas.chamados.dto.ChamadoResponse;
+import br.com.sistemas.chamados.dto.ComentarioRequest;
+import br.com.sistemas.chamados.dto.ComentarioResponse;
 import br.com.sistemas.chamados.entity.Prioridade;
 import br.com.sistemas.chamados.entity.StatusChamado;
 import br.com.sistemas.chamados.service.ChamadoService;
@@ -51,8 +54,14 @@ public class ChamadoController {
     }
 
     @GetMapping("/{id}")
-    public ChamadoResponse buscarPorId(@PathVariable Long id) {
-        return service.buscarPorId(id);
+    public ChamadoDetalheResponse buscarPorId(@PathVariable Long id) {
+        return service.detalhar(id);
+    }
+
+    @PostMapping("/{id}/comentarios")
+    public ResponseEntity<ComentarioResponse> comentar(@PathVariable Long id,
+                                                       @Valid @RequestBody ComentarioRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.comentar(id, request));
     }
 
     @PutMapping("/{id}")
