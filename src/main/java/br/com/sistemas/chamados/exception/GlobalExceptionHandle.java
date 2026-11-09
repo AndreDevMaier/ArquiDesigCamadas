@@ -32,4 +32,13 @@ public class GlobalExceptionHandle {
         return ResponseEntity.status(status).body(new ErroResposta(LocalDateTime.now(), status.value(), erro, detalhes));
     
     }
+    @ExceptionHandler(ChamadoFechadoException.class)
+public ResponseEntity<ErroResposta> chamadoFechado(ChamadoFechadoException ex) {
+    return montar(HttpStatus.CONFLICT, ex.getMessage(), List.of());
+}
+
+@ExceptionHandler(TransicaoStatusInvalidaException.class)
+public ResponseEntity<ErroResposta> transicaoInvalida(TransicaoStatusInvalidaException ex) {
+    return montar(HttpStatus.CONFLICT, ex.getMessage(), List.of());
+}
 }
