@@ -1,0 +1,132 @@
+:root {
+  --azul-escuro: #14213d;
+  --azul: #2563eb;
+  --fundo: #f1f5f9;
+  --card: #ffffff;
+  --texto: #1e293b;
+  --texto-suave: #64748b;
+  --borda: #e2e8f0;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  background: var(--fundo);
+  color: var(--texto);
+}
+
+/* Menu */
+nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 24px;
+  background: linear-gradient(90deg, var(--azul-escuro), #1d3557);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .2);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  flex-wrap: wrap;
+}
+
+nav .marca {
+  color: #fff;
+  font-weight: 700;
+  font-size: 18px;
+  margin-right: 24px;
+  padding: 16px 0;
+  letter-spacing: .3px;
+}
+
+nav a {
+  color: #cbd5e1;
+  text-decoration: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: background .2s, color .2s;
+}
+
+nav a:hover { background: rgba(255, 255, 255, .1); color: #fff; }
+nav a.ativo { background: var(--azul); color: #fff; font-weight: 600; }
+
+/* Conteúdo */
+main {
+  max-width: 1000px;
+  margin: 32px auto;
+  padding: 0 20px;
+}
+
+.cabecalho {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+h1 { margin: 0; font-size: 28px; }
+
+.contador {
+  color: var(--texto-suave);
+  font-size: 14px;
+}
+
+/* Tabela como cartão */
+.tabela-wrap {
+  background: var(--card);
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, .08);
+  overflow-x: auto;
+}
+
+table { width: 100%; border-collapse: collapse; }
+
+th, td { padding: 14px 18px; text-align: left; }
+
+th {
+  background: #f8fafc;
+  color: var(--texto-suave);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  border-bottom: 1px solid var(--borda);
+}
+
+td { border-bottom: 1px solid var(--borda); }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr { transition: background .15s; }
+tbody tr:hover { background: #f8fafc; }
+
+/* Etiquetas de status e prioridade */
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge.aberto       { background: #dbeafe; color: #1d4ed8; }
+.badge.em_andamento { background: #fef3c7; color: #b45309; }
+.badge.fechado      { background: #dcfce7; color: #15803d; }
+
+.badge.alta  { background: #fee2e2; color: #b91c1c; }
+.badge.media { background: #fef3c7; color: #b45309; }
+.badge.baixa { background: #dcfce7; color: #15803d; }
+
+/* Mensagens */
+#msg {
+  color: var(--texto-suave);
+  text-align: center;
+  padding: 24px 0 0;
+}
+#msg:empty { display: none; }
+
+@media (max-width: 600px) {
+  nav { padding: 0 12px; }
+  nav .marca { width: 100%; margin: 0; padding-bottom: 4px; }
+  th, td { padding: 10px 12px; }
+  h1 { font-size: 22px; }
+}
