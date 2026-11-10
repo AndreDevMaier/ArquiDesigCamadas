@@ -130,3 +130,167 @@ tbody tr:hover { background: #f8fafc; }
   th, td { padding: 10px 12px; }
   h1 { font-size: 22px; }
 }
+
+/* Cards de resumo */
+.resumo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.card-resumo {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 18px 20px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, .08);
+  border-left: 5px solid var(--azul-escuro);
+}
+
+.card-resumo .rotulo {
+  color: var(--texto-suave);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+}
+
+.card-resumo .numero {
+  font-size: 34px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.card-resumo.aberto       { border-left-color: #2563eb; }
+.card-resumo.aberto .numero       { color: #1d4ed8; }
+.card-resumo.em_andamento { border-left-color: #f59e0b; }
+.card-resumo.em_andamento .numero { color: #b45309; }
+.card-resumo.fechado      { border-left-color: #22c55e; }
+.card-resumo.fechado .numero      { color: #15803d; }
+
+/* Botões */
+.acoes { display: flex; align-items: center; gap: 14px; }
+
+.btn {
+  border: none;
+  border-radius: 8px;
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .2s;
+}
+.btn-primario { background: var(--azul); color: #fff; }
+.btn-primario:hover { background: #1d4ed8; }
+.btn-suave { background: transparent; color: var(--texto-suave); }
+.btn-suave:hover { background: #e2e8f0; }
+.btn-link {
+  background: none; border: none; cursor: pointer;
+  color: var(--texto-suave); font-size: 13px; text-decoration: underline;
+}
+
+/* Modal */
+.fundo-modal {
+  position: fixed; inset: 0;
+  background: rgba(15, 23, 42, .55);
+  display: none;
+  align-items: center; justify-content: center;
+  padding: 20px; z-index: 20;
+}
+.fundo-modal.aberto { display: flex; }
+
+.modal {
+  background: var(--card);
+  border-radius: 14px;
+  width: 100%; max-width: 440px;
+  padding: 26px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, .3);
+}
+.modal h2 { margin: 0 0 18px; font-size: 20px; }
+
+.campo { margin-bottom: 14px; }
+.campo label {
+  display: block; margin-bottom: 6px;
+  font-size: 13px; font-weight: 600; color: var(--texto-suave);
+}
+.campo input, .campo select, .campo textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  font: inherit;
+  color: var(--texto);
+  background: #fff;
+}
+.campo input:focus, .campo select:focus, .campo textarea:focus {
+  outline: 2px solid #bfdbfe;
+  border-color: var(--azul);
+}
+.campo textarea { resize: vertical; min-height: 80px; }
+
+.rodape-modal {
+  display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;
+}
+
+/* Botões */
+.acoes { display: flex; align-items: center; gap: 14px; }
+
+.btn {
+  border: none;
+  border-radius: 8px;
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .2s;
+}
+.btn-primario { background: var(--azul); color: #fff; }
+.btn-primario:hover { background: #1d4ed8; }
+.btn-suave { background: transparent; color: var(--texto-suave); }
+.btn-suave:hover { background: #e2e8f0; }
+.btn-link {
+  background: none; border: none; cursor: pointer;
+  color: var(--texto-suave); font-size: 13px; text-decoration: underline;
+}
+
+/* Modal */
+.fundo-modal {
+  position: fixed; inset: 0;
+  background: rgba(15, 23, 42, .55);
+  display: none;
+  align-items: center; justify-content: center;
+  padding: 20px; z-index: 20;
+}
+.fundo-modal.aberto { display: flex; }
+
+.modal {
+  background: var(--card);
+  border-radius: 14px;
+  width: 100%; max-width: 440px;
+  padding: 26px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, .3);
+}
+.modal h2 { margin: 0 0 18px; font-size: 20px; }
+
+.campo { margin-bottom: 14px; }
+.campo label {
+  display: block; margin-bottom: 6px;
+  font-size: 13px; font-weight: 600; color: var(--texto-suave);
+}
+.campo input, .campo select, .campo textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  font: inherit;
+  color: var(--texto);
+  background: #fff;
+}
+.campo input:focus, .campo select:focus, .campo textarea:focus {
+  outline: 2px solid #bfdbfe;
+  border-color: var(--azul);
+}
+.campo textarea { resize: vertical; min-height: 80px; }
+
+.rodape-modal {
+  display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;
+}
