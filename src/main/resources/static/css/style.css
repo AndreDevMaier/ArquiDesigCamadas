@@ -294,3 +294,41 @@ tbody tr:hover { background: #f8fafc; }
 .rodape-modal {
   display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;
 }
+
+/* Barra de busca e filtro */
+.barra {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.barra input, .barra select {
+  padding: 10px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  font: inherit;
+  color: var(--texto);
+  background: #fff;
+}
+.barra input { flex: 1; min-width: 200px; }
+.barra input:focus, .barra select:focus {
+  outline: 2px solid #bfdbfe;
+  border-color: var(--azul);
+}
+
+/* Ações por linha */
+.col-acoes { text-align: right; white-space: nowrap; }
+.btn-acao {
+  border: 1px solid var(--borda);
+  background: #fff;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--texto);
+  margin-left: 6px;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.btn-acao:hover { background: #eff6ff; border-color: var(--azul); color: var(--azul); }
+.btn-acao.excluir:hover { background: #fee2e2; border-color: #ef4444; color: #b91c1c; }

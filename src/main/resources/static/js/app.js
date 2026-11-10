@@ -77,6 +77,8 @@ function salvarTudo(dados) {
 }
 
 let todos = lerTudo();
+let listaAtual = [];     // lista completa da entidade (sem filtro)
+let editandoId = null;   // null = cadastrando, número = editando
 
 // ---------- Menu ----------
 const menu = document.getElementById("menu");
@@ -131,11 +133,46 @@ main.insertBefore(cabecalho, h1);
 cabecalho.appendChild(h1);
 cabecalho.appendChild(acoes);
 
+// ---------- Barra de busca / filtro ----------
+const barra = document.createElement("div");
+barra.className = "barra";
+
+const inputBusca = document.createElement("input");
+inputBusca.type = "search";
+inputBusca.placeholder = "Buscar em " + cfg.titulo.toLowerCase() + "...";
+barra.appendChild(inputBusca);
+
+let filtroStatus = null;
+let filtroPrioridade = null;
+
+function criarFiltro(rotuloTodos, opcoes) {
+  const s = document.createElement("select");
+  const todosOpt = document.createElement("option");
+  todosOpt.value = "";
+  todosOpt.textContent = rotuloTodos;
+  s.appendChild(todosOpt);
+  opcoes.forEach(([valor, texto]) => {
+    const o = document.createElement("option");
+    o.value = valor;
+    o.textContent = texto;
+    s.appendChild(o);
+  });
+  barra.appendChild(s);
+  return s;
+}
+
+if (chave === "chamados") {
+  filtroStatus = criarFiltro("Todos os status", STATUS);
+  filtroPrioridade = criarFiltro("Todas as prioridades", PRIORIDADES);
+}
+
+// ---------- Tabela ----------
 const tabela = document.querySelector("table");
 const wrap = document.createElement("div");
 wrap.className = "tabela-wrap";
 tabela.parentNode.insertBefore(wrap, tabela);
 wrap.appendChild(tabela);
+wrap.parentNode.insertBefore(barra, wrap);
 
 const trHead = document.createElement("tr");
 cfg.colunas.forEach(([, rotulo]) => {
@@ -143,6 +180,10 @@ cfg.colunas.forEach(([, rotulo]) => {
   th.textContent = rotulo;
   trHead.appendChild(th);
 });
+const thAcoes = document.createElement("th");
+thAcoes.className = "col-acoes";
+thAcoes.textContent = "Ações";
+trHead.appendChild(thAcoes);
 document.querySelector("thead").appendChild(trHead);
 
 // ---------- Formatação ----------
@@ -213,34 +254,102 @@ async function obterLista() {
   return Array.isArray(dados) ? dados : (dados.content || []);
 }
 
-async function desenhar() {
+function aplicarFiltros(lista) {
+  const termo = inputBusca.value.trim().toLowerCase();
+  return lista.filter(item => {
+    if (filtroStatus && filtroStatus.value && item.status !== filtroStatus.value) return false;
+    if (filtroPrioridade && filtroPrioridade.value && item.prioridade !== filtroPrioridade.value) return false;
+    if (!termo) return true;
+    return cfg.colunas.some(([campo]) => {
+      const valor = item[campo];
+      if (valor === undefined || valor === null) return false;
+      const texto = (campo === "status" || campo === "prioridade")
+        ? formatarEnum(valor) + " " + valor
+        : String(valor);
+      return texto.toLowerCase().includes(termo);
+    });
+  });
+}
+
+function renderizar() {
   const msg = document.getElementById("msg");
   const tbody = document.querySelector("tbody");
   tbody.innerHTML = "";
   msg.textContent = "";
-  try {
-    const lista = await obterLista();
-    contador.textContent = lista.length + (lista.length === 1 ? " registro" : " registros");
-    montarResumo(lista);
 
-    if (lista.length === 0) {
-      msg.textContent = "Nenhum registro encontrado.";
-      return;
-    }
-    lista.forEach(item => {
-      const tr = document.createElement("tr");
-      cfg.colunas.forEach(([campo]) => {
-        const valor = campo.split(".").reduce((o, c) => o?.[c], item);
-        tr.appendChild(criarCelula(campo, valor));
-      });
-      tbody.appendChild(tr);
+  const lista = aplicarFiltros(listaAtual);
+  const total = listaAtual.length;
+  contador.textContent = lista.length === total
+    ? total + (total === 1 ? " registro" : " registros")
+    : lista.length + " de " + total + " registros";
+
+  if (lista.length === 0) {
+    msg.textContent = "Nenhum registro encontrado.";
+    return;
+  }
+
+  lista.forEach(item => {
+    const tr = document.createElement("tr");
+    cfg.colunas.forEach(([campo]) => {
+      const valor = campo.split(".").reduce((o, c) => o?.[c], item);
+      tr.appendChild(criarCelula(campo, valor));
     });
+
+    const td = document.createElement("td");
+    td.className = "col-acoes";
+
+    const btnEditar = document.createElement("button");
+    btnEditar.className = "btn-acao";
+    btnEditar.textContent = "Editar";
+    btnEditar.onclick = () => abrirModal(item);
+
+    const btnExcluir = document.createElement("button");
+    btnExcluir.className = "btn-acao excluir";
+    btnExcluir.textContent = "Excluir";
+    btnExcluir.onclick = () => excluir(item);
+
+    td.appendChild(btnEditar);
+    td.appendChild(btnExcluir);
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+  });
+}
+
+async function desenhar() {
+  const msg = document.getElementById("msg");
+  try {
+    listaAtual = await obterLista();
+    montarResumo(listaAtual);   // cards sempre com o total, sem filtro
+    renderizar();
   } catch (e) {
     msg.textContent = "Não foi possível carregar: " + e.message;
   }
 }
 
-// ---------- Modal de cadastro ----------
+// ---------- Excluir ----------
+async function excluir(item) {
+  const nome = item.titulo || item.nome || item.texto || ("#" + item.id);
+  if (!confirm("Excluir \"" + nome + "\"? Essa ação não pode ser desfeita.")) return;
+
+  try {
+    if (USAR_API) {
+      const resp = await fetch(cfg.url + "/" + item.id, { method: "DELETE" });
+      if (!resp.ok) throw new Error("Erro " + resp.status);
+    } else {
+      todos[chave] = todos[chave].filter(i => i.id !== item.id);
+      // Ao excluir um chamado, remove também os comentários dele
+      if (chave === "chamados") {
+        todos.comentarios = todos.comentarios.filter(c => c.chamadoId !== item.id);
+      }
+      salvarTudo(todos);
+    }
+    desenhar();
+  } catch (e) {
+    alert("Não foi possível excluir: " + e.message);
+  }
+}
+
+// ---------- Modal (cadastrar e editar) ----------
 const fundo = document.createElement("div");
 fundo.className = "fundo-modal";
 
@@ -248,7 +357,6 @@ const modal = document.createElement("div");
 modal.className = "modal";
 
 const tituloModal = document.createElement("h2");
-tituloModal.textContent = "Novo " + cfg.singular;
 
 const form = document.createElement("div");
 
@@ -306,14 +414,17 @@ modal.appendChild(rodape);
 fundo.appendChild(modal);
 document.body.appendChild(fundo);
 
-function abrirModal() {
+function abrirModal(item) {
+  editandoId = item ? item.id : null;
+  tituloModal.textContent = (item ? "Editar " : "Novo ") + cfg.singular;
+
   cfg.campos.forEach(([nome, , tipo, opcoes]) => {
-    entradas[nome].value = tipo === "select" ? opcoes[0][0] : "";
+    if (item) entradas[nome].value = item[nome] ?? "";
+    else entradas[nome].value = tipo === "select" ? opcoes[0][0] : "";
   });
   erro.textContent = "";
   fundo.classList.add("aberto");
-  const primeira = entradas[cfg.campos[0][0]];
-  primeira.focus();
+  entradas[cfg.campos[0][0]].focus();
 }
 
 function fecharModal() {
@@ -321,7 +432,7 @@ function fecharModal() {
 }
 
 async function salvar() {
-  const novo = {};
+  const dados = {};
   for (const [nome, rotulo, tipo] of cfg.campos) {
     let valor = entradas[nome].value.trim();
     if (!valor) {
@@ -335,21 +446,26 @@ async function salvar() {
       return;
     }
     if (tipo === "number") valor = Number(valor);
-    novo[nome] = valor;
+    dados[nome] = valor;
   }
 
   try {
     if (USAR_API) {
-      const resp = await fetch(cfg.url, {
-        method: "POST",
+      const resp = await fetch(editandoId ? cfg.url + "/" + editandoId : cfg.url, {
+        method: editandoId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(novo)
+        body: JSON.stringify(dados)
       });
       if (!resp.ok) throw new Error("Erro " + resp.status);
     } else {
       const lista = todos[chave];
-      novo.id = lista.reduce((m, i) => Math.max(m, i.id), 0) + 1;
-      lista.push(novo);
+      if (editandoId) {
+        const i = lista.findIndex(x => x.id === editandoId);
+        if (i >= 0) lista[i] = { ...lista[i], ...dados };
+      } else {
+        dados.id = lista.reduce((m, x) => Math.max(m, x.id), 0) + 1;
+        lista.push(dados);
+      }
       salvarTudo(todos);
     }
     fecharModal();
@@ -359,10 +475,15 @@ async function salvar() {
   }
 }
 
-btnNovo.onclick = abrirModal;
+btnNovo.onclick = () => abrirModal(null);
 btnCancelar.onclick = fecharModal;
 btnSalvar.onclick = salvar;
 fundo.addEventListener("click", e => { if (e.target === fundo) fecharModal(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape") fecharModal(); });
+
+// Busca e filtros
+inputBusca.addEventListener("input", renderizar);
+if (filtroStatus) filtroStatus.addEventListener("change", renderizar);
+if (filtroPrioridade) filtroPrioridade.addEventListener("change", renderizar);
 
 desenhar();
