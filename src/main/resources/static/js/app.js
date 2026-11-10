@@ -1,84 +1,107 @@
-// Mude para true quando o backend estiver pronto
-const USAR_API = false;
-
-const DADOS_EXEMPLO = {
-  chamados: [
-    { id: 1, titulo: "Computador não liga", status: "ABERTO", prioridade: "ALTA" },
-    { id: 2, titulo: "Erro ao acessar o sistema", status: "EM_ANDAMENTO", prioridade: "MEDIA" },
-    { id: 3, titulo: "Solicitar novo mouse", status: "FECHADO", prioridade: "BAIXA" }
-  ],
-  clientes: [
-    { id: 1, nome: "Maria Souza", email: "maria@email.com" },
-    { id: 2, nome: "João Pereira", email: "joao@email.com" }
-  ],
-  categorias: [
-    { id: 1, nome: "Hardware" },
-    { id: 2, nome: "Software" },
-    { id: 3, nome: "Rede" }
-  ],
-  tecnicos: [
-    { id: 1, nome: "Carlos Lima", email: "carlos@empresa.com" },
-    { id: 2, nome: "Ana Costa", email: "ana@empresa.com" }
-  ],
-  comentarios: [
-    { id: 1, texto: "Verificando a fonte do computador.", chamadoId: 1 },
-    { id: 2, texto: "Cliente reiniciou e o erro continua.", chamadoId: 2 }
-  ]
-};
-
 const STATUS = [["ABERTO", "Aberto"], ["EM_ANDAMENTO", "Em andamento"], ["FECHADO", "Fechado"]];
 const PRIORIDADES = [["ALTA", "Alta"], ["MEDIA", "Média"], ["BAIXA", "Baixa"]];
+const PERFIS = [["ADMIN", "Admin"], ["TECNICO", "Técnico"]];
 
-// campos: [nome, rótulo, tipo, opções]
+// fonte: opções carregadas da API | obrigatorio: false permite vazio (enviado como null)
 const ENTIDADES = {
   chamados: {
-    pagina: "index.html", titulo: "Chamados", singular: "chamado", url: "/chamados",
-    colunas: [["id","ID"],["titulo","Título"],["status","Status"],["prioridade","Prioridade"]],
-    campos: [["titulo","Título","text"],["status","Status","select",STATUS],["prioridade","Prioridade","select",PRIORIDADES]]
+    pagina: "index.html", titulo: "Chamados", singular: "chamado",
+    url: "/chamados", lista: "/chamados?size=1000",
+    colunas: [["id","ID"],["titulo","Título"],["clienteNome","Cliente"],["categoriaNome","Categoria"],
+              ["tecnicoNome","Técnico"],["status","Status"],["prioridade","Prioridade"]],
+    campos: [
+      { nome: "titulo", rotulo: "Título", tipo: "text", obrigatorio: true },
+      { nome: "descricao", rotulo: "Descrição", tipo: "textarea", obrigatorio: true },
+      { nome: "clienteId", rotulo: "Cliente", tipo: "select", obrigatorio: true, fonte: { url: "/cliente", texto: "nome" } },
+      { nome: "categoriaId", rotulo: "Categoria", tipo: "select", obrigatorio: true, fonte: { url: "/categorias", texto: "nome" } },
+      { nome: "tecnicoId", rotulo: "Técnico (opcional)", tipo: "select", fonte: { url: "/tecnicos", texto: "nome" } },
+      { nome: "prioridade", rotulo: "Prioridade", tipo: "select", obrigatorio: true, opcoes: PRIORIDADES },
+      { nome: "status", rotulo: "Status", tipo: "select", obrigatorio: true, opcoes: STATUS }
+    ]
   },
   clientes: {
-    pagina: "clientes.html", titulo: "Clientes", singular: "cliente", url: "/clientes",
-    colunas: [["id","ID"],["nome","Nome"],["email","E-mail"]],
-    campos: [["nome","Nome","text"],["email","E-mail","email"]]
+    pagina: "clientes.html", titulo: "Clientes", singular: "cliente",
+    url: "/cliente", lista: "/cliente",
+    colunas: [["id","ID"],["nome","Nome"],["email","E-mail"],["telefone","Telefone"]],
+    campos: [
+      { nome: "nome", rotulo: "Nome", tipo: "text", obrigatorio: true },
+      { nome: "email", rotulo: "E-mail", tipo: "email", obrigatorio: true },
+      { nome: "telefone", rotulo: "Telefone (opcional)", tipo: "text" }
+    ]
   },
   categorias: {
-    pagina: "categorias.html", titulo: "Categorias", singular: "categoria", url: "/categorias",
-    colunas: [["id","ID"],["nome","Nome"]],
-    campos: [["nome","Nome","text"]]
+    pagina: "categorias.html", titulo: "Categorias", singular: "categoria",
+    url: "/categorias", lista: "/categorias",
+    colunas: [["id","ID"],["nome","Nome"],["descricao","Descrição"]],
+    campos: [
+      { nome: "nome", rotulo: "Nome", tipo: "text", obrigatorio: true },
+      { nome: "descricao", rotulo: "Descrição (opcional)", tipo: "text" }
+    ]
   },
   tecnicos: {
-    pagina: "tecnicos.html", titulo: "Técnicos", singular: "técnico", url: "/tecnicos",
-    colunas: [["id","ID"],["nome","Nome"],["email","E-mail"]],
-    campos: [["nome","Nome","text"],["email","E-mail","email"]]
+    pagina: "tecnicos.html", titulo: "Técnicos", singular: "técnico",
+    url: "/tecnicos", lista: "/tecnicos",
+    colunas: [["id","ID"],["nome","Nome"],["email","E-mail"],["perfil","Perfil"]],
+    campos: [
+      { nome: "nome", rotulo: "Nome", tipo: "text", obrigatorio: true },
+      { nome: "email", rotulo: "E-mail", tipo: "email", obrigatorio: true },
+      { nome: "perfil", rotulo: "Perfil", tipo: "select", obrigatorio: true, opcoes: PERFIS }
+    ]
   },
   comentarios: {
-    pagina: "comentarios.html", titulo: "Comentários", singular: "comentário", url: "/comentarios",
-    colunas: [["id","ID"],["texto","Texto"],["chamadoId","Chamado"]],
-    campos: [["texto","Texto","textarea"],["chamadoId","Nº do chamado","number"]]
+    pagina: "comentarios.html", titulo: "Comentários", singular: "comentário",
+    somenteCriar: true,   // a API não tem listar/editar/excluir comentário
+    colunas: [["id","ID"],["chamadoTitulo","Chamado"],["autor","Autor"],["texto","Texto"],["data","Data"]],
+    campos: [
+      { nome: "chamadoId", rotulo: "Chamado", tipo: "select", obrigatorio: true, fonte: { url: "/chamados?size=1000", texto: "titulo" } },
+      { nome: "autor", rotulo: "Autor", tipo: "text", obrigatorio: true },
+      { nome: "texto", rotulo: "Texto", tipo: "textarea", obrigatorio: true }
+    ]
   }
 };
 
 const chave = document.body.dataset.entidade;
 const cfg = ENTIDADES[chave];
 
-// ---------- Armazenamento (localStorage) ----------
-const CHAVE_STORAGE = "chamados-dados";
+let listaAtual = [];
+let editandoId = null;
+let entradas = {};
 
-function lerTudo() {
+// ---------- API ----------
+async function lerErro(resp) {
   try {
-    const salvo = JSON.parse(localStorage.getItem(CHAVE_STORAGE));
-    if (salvo) return salvo;
-  } catch (e) { /* ignora */ }
-  return JSON.parse(JSON.stringify(DADOS_EXEMPLO));
+    const j = await resp.json();
+    return j.message || j.mensagem || j.erro || j.error || JSON.stringify(j);
+  } catch (e) {
+    return "Erro " + resp.status;
+  }
 }
 
-function salvarTudo(dados) {
-  try { localStorage.setItem(CHAVE_STORAGE, JSON.stringify(dados)); } catch (e) { /* ignora */ }
+async function chamarApi(url, opcoes) {
+  const resp = await fetch(url, opcoes);
+  if (!resp.ok) throw new Error(await lerErro(resp));
+  return resp.status === 204 ? null : resp.json();
 }
 
-let todos = lerTudo();
-let listaAtual = [];     // lista completa da entidade (sem filtro)
-let editandoId = null;   // null = cadastrando, número = editando
+async function listarApi(url) {
+  const dados = await chamarApi(url);
+  return Array.isArray(dados) ? dados : (dados.content || []);
+}
+
+function enviarJson(metodo, corpo) {
+  return { method: metodo, headers: { "Content-Type": "application/json" }, body: JSON.stringify(corpo) };
+}
+
+async function obterLista() {
+  if (chave === "comentarios") {
+    const chamados = await listarApi("/chamados?size=1000");
+    const detalhes = await Promise.all(chamados.map(c => chamarApi("/chamados/" + c.id)));
+    return detalhes.flatMap(d => d.comentarios.map(c => ({
+      ...c, chamadoId: d.chamado.id, chamadoTitulo: d.chamado.titulo
+    })));
+  }
+  return listarApi(cfg.lista);
+}
 
 // ---------- Menu ----------
 const menu = document.getElementById("menu");
@@ -102,41 +125,23 @@ h1.textContent = cfg.titulo;
 
 const cabecalho = document.createElement("div");
 cabecalho.className = "cabecalho";
-
 const acoes = document.createElement("div");
 acoes.className = "acoes";
-
 const contador = document.createElement("span");
 contador.className = "contador";
-
 const btnNovo = document.createElement("button");
 btnNovo.className = "btn btn-primario";
 btnNovo.textContent = "+ Novo " + cfg.singular;
-
 acoes.appendChild(contador);
-if (!USAR_API) {
-  const btnReset = document.createElement("button");
-  btnReset.className = "btn-link";
-  btnReset.textContent = "Restaurar exemplos";
-  btnReset.onclick = () => {
-    if (confirm("Voltar todos os dados para os exemplos?")) {
-      todos = JSON.parse(JSON.stringify(DADOS_EXEMPLO));
-      salvarTudo(todos);
-      desenhar();
-    }
-  };
-  acoes.appendChild(btnReset);
-}
 acoes.appendChild(btnNovo);
 
 main.insertBefore(cabecalho, h1);
 cabecalho.appendChild(h1);
 cabecalho.appendChild(acoes);
 
-// ---------- Barra de busca / filtro ----------
+// ---------- Busca / filtros ----------
 const barra = document.createElement("div");
 barra.className = "barra";
-
 const inputBusca = document.createElement("input");
 inputBusca.type = "search";
 inputBusca.placeholder = "Buscar em " + cfg.titulo.toLowerCase() + "...";
@@ -147,10 +152,10 @@ let filtroPrioridade = null;
 
 function criarFiltro(rotuloTodos, opcoes) {
   const s = document.createElement("select");
-  const todosOpt = document.createElement("option");
-  todosOpt.value = "";
-  todosOpt.textContent = rotuloTodos;
-  s.appendChild(todosOpt);
+  const o0 = document.createElement("option");
+  o0.value = "";
+  o0.textContent = rotuloTodos;
+  s.appendChild(o0);
   opcoes.forEach(([valor, texto]) => {
     const o = document.createElement("option");
     o.value = valor;
@@ -180,16 +185,25 @@ cfg.colunas.forEach(([, rotulo]) => {
   th.textContent = rotulo;
   trHead.appendChild(th);
 });
-const thAcoes = document.createElement("th");
-thAcoes.className = "col-acoes";
-thAcoes.textContent = "Ações";
-trHead.appendChild(thAcoes);
+if (!cfg.somenteCriar) {
+  const thAcoes = document.createElement("th");
+  thAcoes.className = "col-acoes";
+  thAcoes.textContent = "Ações";
+  trHead.appendChild(thAcoes);
+}
 document.querySelector("thead").appendChild(trHead);
 
 // ---------- Formatação ----------
 function formatarEnum(valor) {
   const texto = String(valor).replace(/_/g, " ").toLowerCase();
   return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
+function textoDaCelula(campo, valor) {
+  if (valor === undefined || valor === null) return "";
+  if (campo === "data" || campo === "dataAbertura") return new Date(valor).toLocaleString("pt-BR");
+  if (campo === "perfil") return formatarEnum(valor);
+  return String(valor);
 }
 
 function criarCelula(campo, valor) {
@@ -202,7 +216,7 @@ function criarCelula(campo, valor) {
     badge.textContent = formatarEnum(valor);
     td.appendChild(badge);
   } else {
-    td.textContent = valor;
+    td.textContent = textoDaCelula(campo, valor);
   }
   return td;
 }
@@ -212,48 +226,35 @@ let resumo = null;
 
 function montarResumo(lista) {
   if (chave !== "chamados") return;
-
   if (resumo) resumo.remove();
+
   const contar = status => lista.filter(c => c.status === status).length;
   const itens = [
-    ["total",        "Total",        lista.length],
-    ["aberto",       "Abertos",      contar("ABERTO")],
+    ["total", "Total", lista.length],
+    ["aberto", "Abertos", contar("ABERTO")],
     ["em_andamento", "Em andamento", contar("EM_ANDAMENTO")],
-    ["fechado",      "Fechados",     contar("FECHADO")]
+    ["fechado", "Fechados", contar("FECHADO")]
   ];
 
   resumo = document.createElement("section");
   resumo.className = "resumo";
-
   itens.forEach(([classe, rotulo, valor]) => {
     const card = document.createElement("div");
     card.className = "card-resumo " + classe;
-
     const r = document.createElement("div");
     r.className = "rotulo";
     r.textContent = rotulo;
-
     const n = document.createElement("div");
     n.className = "numero";
     n.textContent = valor;
-
     card.appendChild(r);
     card.appendChild(n);
     resumo.appendChild(card);
   });
-
   main.insertBefore(resumo, cabecalho);
 }
 
-// ---------- Dados ----------
-async function obterLista() {
-  if (!USAR_API) return todos[chave];
-  const resp = await fetch(cfg.url);
-  if (!resp.ok) throw new Error("Erro " + resp.status);
-  const dados = await resp.json();
-  return Array.isArray(dados) ? dados : (dados.content || []);
-}
-
+// ---------- Renderização ----------
 function aplicarFiltros(lista) {
   const termo = inputBusca.value.trim().toLowerCase();
   return lista.filter(item => {
@@ -265,7 +266,7 @@ function aplicarFiltros(lista) {
       if (valor === undefined || valor === null) return false;
       const texto = (campo === "status" || campo === "prioridade")
         ? formatarEnum(valor) + " " + valor
-        : String(valor);
+        : textoDaCelula(campo, valor);
       return texto.toLowerCase().includes(termo);
     });
   });
@@ -290,27 +291,26 @@ function renderizar() {
 
   lista.forEach(item => {
     const tr = document.createElement("tr");
-    cfg.colunas.forEach(([campo]) => {
-      const valor = campo.split(".").reduce((o, c) => o?.[c], item);
-      tr.appendChild(criarCelula(campo, valor));
-    });
+    cfg.colunas.forEach(([campo]) => tr.appendChild(criarCelula(campo, item[campo])));
 
-    const td = document.createElement("td");
-    td.className = "col-acoes";
+    if (!cfg.somenteCriar) {
+      const td = document.createElement("td");
+      td.className = "col-acoes";
 
-    const btnEditar = document.createElement("button");
-    btnEditar.className = "btn-acao";
-    btnEditar.textContent = "Editar";
-    btnEditar.onclick = () => abrirModal(item);
+      const btnEditar = document.createElement("button");
+      btnEditar.className = "btn-acao";
+      btnEditar.textContent = "Editar";
+      btnEditar.onclick = () => abrirModal(item);
 
-    const btnExcluir = document.createElement("button");
-    btnExcluir.className = "btn-acao excluir";
-    btnExcluir.textContent = "Excluir";
-    btnExcluir.onclick = () => excluir(item);
+      const btnExcluir = document.createElement("button");
+      btnExcluir.className = "btn-acao excluir";
+      btnExcluir.textContent = "Excluir";
+      btnExcluir.onclick = () => excluir(item);
 
-    td.appendChild(btnEditar);
-    td.appendChild(btnExcluir);
-    tr.appendChild(td);
+      td.appendChild(btnEditar);
+      td.appendChild(btnExcluir);
+      tr.appendChild(td);
+    }
     tbody.appendChild(tr);
   });
 }
@@ -319,7 +319,7 @@ async function desenhar() {
   const msg = document.getElementById("msg");
   try {
     listaAtual = await obterLista();
-    montarResumo(listaAtual);   // cards sempre com o total, sem filtro
+    montarResumo(listaAtual);
     renderizar();
   } catch (e) {
     msg.textContent = "Não foi possível carregar: " + e.message;
@@ -328,21 +328,10 @@ async function desenhar() {
 
 // ---------- Excluir ----------
 async function excluir(item) {
-  const nome = item.titulo || item.nome || item.texto || ("#" + item.id);
+  const nome = item.titulo || item.nome || ("#" + item.id);
   if (!confirm("Excluir \"" + nome + "\"? Essa ação não pode ser desfeita.")) return;
-
   try {
-    if (USAR_API) {
-      const resp = await fetch(cfg.url + "/" + item.id, { method: "DELETE" });
-      if (!resp.ok) throw new Error("Erro " + resp.status);
-    } else {
-      todos[chave] = todos[chave].filter(i => i.id !== item.id);
-      // Ao excluir um chamado, remove também os comentários dele
-      if (chave === "chamados") {
-        todos.comentarios = todos.comentarios.filter(c => c.chamadoId !== item.id);
-      }
-      salvarTudo(todos);
-    }
+    await chamarApi(cfg.url + "/" + item.id, { method: "DELETE" });
     desenhar();
   } catch (e) {
     alert("Não foi possível excluir: " + e.message);
@@ -352,58 +341,22 @@ async function excluir(item) {
 // ---------- Modal (cadastrar e editar) ----------
 const fundo = document.createElement("div");
 fundo.className = "fundo-modal";
-
 const modal = document.createElement("div");
 modal.className = "modal";
-
 const tituloModal = document.createElement("h2");
-
 const form = document.createElement("div");
-
-const entradas = {};
-cfg.campos.forEach(([nome, rotulo, tipo, opcoes]) => {
-  const campo = document.createElement("div");
-  campo.className = "campo";
-
-  const label = document.createElement("label");
-  label.textContent = rotulo;
-
-  let entrada;
-  if (tipo === "select") {
-    entrada = document.createElement("select");
-    opcoes.forEach(([valor, texto]) => {
-      const o = document.createElement("option");
-      o.value = valor;
-      o.textContent = texto;
-      entrada.appendChild(o);
-    });
-  } else if (tipo === "textarea") {
-    entrada = document.createElement("textarea");
-  } else {
-    entrada = document.createElement("input");
-    entrada.type = tipo;
-    if (tipo === "number") entrada.min = "1";
-  }
-  entradas[nome] = entrada;
-  campo.appendChild(label);
-  campo.appendChild(entrada);
-  form.appendChild(campo);
-});
 
 const erro = document.createElement("p");
 erro.style.cssText = "color:#b91c1c;font-size:13px;margin:0;min-height:16px;";
 
 const rodape = document.createElement("div");
 rodape.className = "rodape-modal";
-
 const btnCancelar = document.createElement("button");
 btnCancelar.className = "btn btn-suave";
 btnCancelar.textContent = "Cancelar";
-
 const btnSalvar = document.createElement("button");
 btnSalvar.className = "btn btn-primario";
 btnSalvar.textContent = "Salvar";
-
 rodape.appendChild(btnCancelar);
 rodape.appendChild(btnSalvar);
 
@@ -414,17 +367,65 @@ modal.appendChild(rodape);
 fundo.appendChild(modal);
 document.body.appendChild(fundo);
 
-function abrirModal(item) {
+async function abrirModal(item) {
   editandoId = item ? item.id : null;
   tituloModal.textContent = (item ? "Editar " : "Novo ") + cfg.singular;
-
-  cfg.campos.forEach(([nome, , tipo, opcoes]) => {
-    if (item) entradas[nome].value = item[nome] ?? "";
-    else entradas[nome].value = tipo === "select" ? opcoes[0][0] : "";
-  });
-  erro.textContent = "";
+  form.innerHTML = "";
+  entradas = {};
+  erro.textContent = "Carregando...";
+  btnSalvar.disabled = true;
   fundo.classList.add("aberto");
-  entradas[cfg.campos[0][0]].focus();
+
+  try {
+    for (const c of cfg.campos) {
+      const campo = document.createElement("div");
+      campo.className = "campo";
+      const label = document.createElement("label");
+      label.textContent = c.rotulo;
+
+      let entrada;
+      if (c.tipo === "select") {
+        entrada = document.createElement("select");
+        let opcoes = c.opcoes;
+        if (c.fonte) {
+          const lista = await listarApi(c.fonte.url);
+          opcoes = lista.map(x => [x.id, x[c.fonte.texto]]);
+        }
+        if (!c.obrigatorio) {
+          const o = document.createElement("option");
+          o.value = "";
+          o.textContent = "— Nenhum —";
+          entrada.appendChild(o);
+        }
+        opcoes.forEach(([valor, texto]) => {
+          const o = document.createElement("option");
+          o.value = valor;
+          o.textContent = texto;
+          entrada.appendChild(o);
+        });
+        const atual = item ? item[c.nome] : null;
+        if (atual !== null && atual !== undefined) entrada.value = atual;
+        else if (!c.obrigatorio) entrada.value = "";
+      } else if (c.tipo === "textarea") {
+        entrada = document.createElement("textarea");
+        entrada.value = item ? (item[c.nome] ?? "") : "";
+      } else {
+        entrada = document.createElement("input");
+        entrada.type = c.tipo;
+        entrada.value = item ? (item[c.nome] ?? "") : "";
+      }
+
+      entradas[c.nome] = entrada;
+      campo.appendChild(label);
+      campo.appendChild(entrada);
+      form.appendChild(campo);
+    }
+    erro.textContent = "";
+    btnSalvar.disabled = false;
+    entradas[cfg.campos[0].nome].focus();
+  } catch (e) {
+    erro.textContent = "Não foi possível carregar o formulário: " + e.message;
+  }
 }
 
 function fecharModal() {
@@ -433,40 +434,34 @@ function fecharModal() {
 
 async function salvar() {
   const dados = {};
-  for (const [nome, rotulo, tipo] of cfg.campos) {
-    let valor = entradas[nome].value.trim();
+  for (const c of cfg.campos) {
+    let valor = entradas[c.nome].value.trim();
     if (!valor) {
-      erro.textContent = "Preencha o campo \"" + rotulo + "\".";
-      entradas[nome].focus();
-      return;
+      if (c.obrigatorio) {
+        erro.textContent = "Preencha o campo \"" + c.rotulo + "\".";
+        entradas[c.nome].focus();
+        return;
+      }
+      dados[c.nome] = null;
+      continue;
     }
-    if (tipo === "email" && !/^\S+@\S+\.\S+$/.test(valor)) {
+    if (c.tipo === "email" && !/^\S+@\S+\.\S+$/.test(valor)) {
       erro.textContent = "Informe um e-mail válido.";
-      entradas[nome].focus();
+      entradas[c.nome].focus();
       return;
     }
-    if (tipo === "number") valor = Number(valor);
-    dados[nome] = valor;
+    if (c.fonte) valor = Number(valor);
+    dados[c.nome] = valor;
   }
 
   try {
-    if (USAR_API) {
-      const resp = await fetch(editandoId ? cfg.url + "/" + editandoId : cfg.url, {
-        method: editandoId ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(dados)
-      });
-      if (!resp.ok) throw new Error("Erro " + resp.status);
+    if (chave === "comentarios") {
+      const { chamadoId, ...corpo } = dados;
+      await chamarApi("/chamados/" + chamadoId + "/comentarios", enviarJson("POST", corpo));
+    } else if (editandoId) {
+      await chamarApi(cfg.url + "/" + editandoId, enviarJson("PUT", dados));
     } else {
-      const lista = todos[chave];
-      if (editandoId) {
-        const i = lista.findIndex(x => x.id === editandoId);
-        if (i >= 0) lista[i] = { ...lista[i], ...dados };
-      } else {
-        dados.id = lista.reduce((m, x) => Math.max(m, x.id), 0) + 1;
-        lista.push(dados);
-      }
-      salvarTudo(todos);
+      await chamarApi(cfg.url, enviarJson("POST", dados));
     }
     fecharModal();
     desenhar();
@@ -481,7 +476,6 @@ btnSalvar.onclick = salvar;
 fundo.addEventListener("click", e => { if (e.target === fundo) fecharModal(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape") fecharModal(); });
 
-// Busca e filtros
 inputBusca.addEventListener("input", renderizar);
 if (filtroStatus) filtroStatus.addEventListener("change", renderizar);
 if (filtroPrioridade) filtroPrioridade.addEventListener("change", renderizar);
