@@ -273,3 +273,31 @@ tbody tr:hover { background: #f8fafc; }
   th, td { padding: 10px 12px; }
   h1 { font-size: 22px; }
 }
+
+/* Detalhe do chamado */
+.modal.detalhe { max-width: 640px; }
+.tags { display: flex; gap: 8px; margin-bottom: 12px; }
+.descricao { margin: 0 0 8px; line-height: 1.5; }
+.info { display: grid; grid-template-columns: 110px 1fr; gap: 6px 12px; margin: 14px 0; }
+.info dt { color: var(--texto-suave); font-size: 13px; font-weight: 600; }
+.info dd { margin: 0; }
+.linha-acao { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.linha-acao select, .novo-comentario input, .novo-comentario textarea {
+  flex: 1; min-width: 140px; padding: 10px 12px; font: inherit; color: var(--texto);
+  border: 1px solid var(--borda); border-radius: 8px; background: #fff;
+}
+.novo-comentario input, .novo-comentario textarea { width: 100%; margin-bottom: 8px; }
+.novo-comentario textarea { min-height: 70px; resize: vertical; }
+.modal h3 { margin: 20px 0 10px; font-size: 16px; }
+.vazio { color: var(--texto-suave); font-size: 14px; }
+.comentario { background: #f8fafc; border: 1px solid var(--borda); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+.comentario .data { color: var(--texto-suave); font-size: 12px; margin-left: 8px; }
+.comentario p { margin: 4px 0 0; }
+
+/* Aviso */
+.toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 40;
+  background: var(--azul-escuro); color: #fff; padding: 12px 18px;
+  border-radius: 10px; box-shadow: 0 8px 24px rgba(15, 23, 42, .3); font-size: 14px; max-width: 360px;
+}
+.toast.ruim { background: #b91c1c; }

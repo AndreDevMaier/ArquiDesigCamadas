@@ -17,6 +17,7 @@ const TRANSICOES = {
 };
 
 const ROTULOS = Object.fromEntries([...STATUS, ...PRIORIDADES, ...PERFIS]);
+const PLURAL = { ABERTO: "Abertos", EM_ATENDIMENTO: "Em atendimento", AGUARDANDO_CLIENTE: "Aguardando cliente", FECHADO: "Fechados" };
 
 // fonte: opções carregadas da API | obrigatorio: false permite vazio (enviado como null)
 // soEdicao: campo que só aparece ao editar | transicoes: lista só os status permitidos
@@ -39,7 +40,8 @@ const ENTIDADES = {
   clientes: {
     pagina: "clientes.html", titulo: "Clientes", singular: "cliente", novo: "Novo cliente",
     url: "/cliente", lista: "/cliente",
-    colunas: [["id","ID"],["nome","Nome"],["email","E-mail"],["telefone","Telefone"]],
+    contarPor: "clienteId",
+    colunas: [["id","ID"],["nome","Nome"],["email","E-mail"],["telefone","Telefone"],["qtdChamados","Chamados"]],
     campos: [
       { nome: "nome", rotulo: "Nome", tipo: "text", obrigatorio: true },
       { nome: "email", rotulo: "E-mail", tipo: "email", obrigatorio: true },
@@ -49,7 +51,8 @@ const ENTIDADES = {
   categorias: {
     pagina: "categorias.html", titulo: "Categorias", singular: "categoria", novo: "Nova categoria",
     url: "/categorias", lista: "/categorias",
-    colunas: [["id","ID"],["nome","Nome"],["descricao","Descrição"]],
+    contarPor: "categoriaId",
+    colunas: [["id","ID"],["nome","Nome"],["descricao","Descrição"],["qtdChamados","Chamados"]],
     campos: [
       { nome: "nome", rotulo: "Nome", tipo: "text", obrigatorio: true },
       { nome: "descricao", rotulo: "Descrição (opcional)", tipo: "text" }
@@ -58,7 +61,8 @@ const ENTIDADES = {
   tecnicos: {
     pagina: "tecnicos.html", titulo: "Técnicos", singular: "técnico", novo: "Novo técnico",
     url: "/tecnicos", lista: "/tecnicos",
-    colunas: [["id","ID"],["nome","Nome"],["email","E-mail"],["perfil","Perfil"]],
+    contarPor: "tecnicoId",
+    colunas: [["id","ID"],["nome","Nome"],["email","E-mail"],["perfil","Perfil"],["qtdChamados","Chamados"]],
     campos: [
       { nome: "nome", rotulo: "Nome", tipo: "text", obrigatorio: true },
       { nome: "email", rotulo: "E-mail", tipo: "email", obrigatorio: true },
@@ -118,7 +122,12 @@ async function obterLista() {
       ...c, chamadoId: d.chamado.id, chamadoTitulo: d.chamado.titulo
     })));
   }
-  return listarApi(cfg.lista);
+  const lista = await listarApi(cfg.lista);
+  if (cfg.contarPor) {   // quantos chamados cada registro tem
+    const chamados = await listarApi("/chamados?size=1000");
+    lista.forEach(i => { i.qtdChamados = chamados.filter(c => c[cfg.contarPor] === i.id).length; });
+  }
+  return lista;
 }
 
 // ---------- Menu ----------
@@ -250,7 +259,7 @@ function montarResumo(lista) {
   const contar = status => lista.filter(c => c.status === status).length;
   const itens = [["total", "Total", lista.length]];
   STATUS.forEach(([valor, rotulo]) => {
-    itens.push([valor.toLowerCase(), rotulo, contar(valor)]);
+    itens.push([valor.toLowerCase(), PLURAL[valor], contar(valor)]);
   });
 
   resumo = document.createElement("section");
@@ -330,6 +339,13 @@ function renderizar() {
       btnExcluir.textContent = "Excluir";
       btnExcluir.onclick = () => excluir(item);
 
+      if (chave === "chamados") {
+        const btnDetalhes = document.createElement("button");
+        btnDetalhes.className = "btn-acao";
+        btnDetalhes.textContent = "Detalhes";
+        btnDetalhes.onclick = () => abrirDetalhe(item.id);
+        td.appendChild(btnDetalhes);
+      }
       td.appendChild(btnEditar);
       td.appendChild(btnExcluir);
       tr.appendChild(td);
@@ -352,12 +368,17 @@ async function desenhar() {
 // ---------- Excluir ----------
 async function excluir(item) {
   const nome = item.titulo || item.nome || ("#" + item.id);
+  if (item.qtdChamados > 0) {
+    toast("Não é possível excluir \"" + nome + "\": há " + item.qtdChamados + " chamado(s) vinculado(s).", true);
+    return;
+  }
   if (!confirm("Excluir \"" + nome + "\"? Essa ação não pode ser desfeita.")) return;
   try {
     await chamarApi(cfg.url + "/" + item.id, { method: "DELETE" });
+    toast("Excluído com sucesso.");
     desenhar();
   } catch (e) {
-    alert("Não foi possível excluir: " + e.message);
+    toast("Não foi possível excluir: " + e.message, true);
   }
 }
 
@@ -500,9 +521,145 @@ async function salvar() {
       await chamarApi(cfg.url, enviarJson("POST", dados));
     }
     fecharModal();
+    toast("Salvo com sucesso.");
     desenhar();
   } catch (e) {
     erro.textContent = "Não foi possível salvar: " + e.message;
+  }
+}
+
+// ---------- Aviso (toast) ----------
+function toast(texto, ruim) {
+  const t = document.createElement("div");
+  t.className = "toast" + (ruim ? " ruim" : "");
+  t.textContent = texto;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// ---------- Detalhe do chamado ----------
+const fundoDet = document.createElement("div");
+fundoDet.className = "fundo-modal";
+const painel = document.createElement("div");
+painel.className = "modal detalhe";
+fundoDet.appendChild(painel);
+document.body.appendChild(fundoDet);
+fundoDet.addEventListener("click", e => { if (e.target === fundoDet) fundoDet.classList.remove("aberto"); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") fundoDet.classList.remove("aberto"); });
+
+function el(tag, classe, texto) {
+  const e = document.createElement(tag);
+  if (classe) e.className = classe;
+  if (texto !== undefined) e.textContent = texto;
+  return e;
+}
+
+function selecao(opcoes, atual) {
+  const s = document.createElement("select");
+  opcoes.forEach(([v, t]) => { const o = el("option", "", t); o.value = v; s.appendChild(o); });
+  if (atual !== null && atual !== undefined) s.value = atual;
+  return s;
+}
+
+function badge(valor) {
+  return el("span", "badge " + String(valor).toLowerCase(), formatarEnum(valor));
+}
+
+function dataBr(v) {
+  return v ? new Date(v).toLocaleString("pt-BR") : "—";
+}
+
+async function agir(fn, msgOk, id) {
+  try {
+    await fn();
+    toast(msgOk);
+    await abrirDetalhe(id);
+    desenhar();
+  } catch (e) {
+    toast(e.message, true);
+  }
+}
+
+async function abrirDetalhe(id) {
+  fundoDet.classList.add("aberto");
+  try {
+    const d = await chamarApi("/chamados/" + id);
+    const c = d.chamado;
+    painel.innerHTML = "";
+
+    painel.appendChild(el("h2", "", c.titulo));
+    const tags = el("div", "tags");
+    tags.appendChild(badge(c.status));
+    tags.appendChild(badge(c.prioridade));
+    painel.appendChild(tags);
+    painel.appendChild(el("p", "descricao", c.descricao));
+
+    const info = el("dl", "info");
+    [["Cliente", c.clienteNome], ["Categoria", c.categoriaNome],
+     ["Técnico", c.tecnicoNome || "Não atribuído"],
+     ["Abertura", dataBr(c.dataAbertura)], ["Fechamento", dataBr(c.dataFechamento)]]
+      .forEach(([k, v]) => { info.appendChild(el("dt", "", k)); info.appendChild(el("dd", "", v)); });
+    painel.appendChild(info);
+
+    if (c.status !== "FECHADO") {
+      const tecnicos = await listarApi("/tecnicos");
+
+      const permitidos = [c.status, ...TRANSICOES[c.status]];
+      const sStatus = selecao(STATUS.filter(([v]) => permitidos.includes(v)), c.status);
+      const bStatus = el("button", "btn btn-primario", "Alterar status");
+      bStatus.onclick = () => agir(() => chamarApi("/chamados/" + id + "/status",
+        enviarJson("PATCH", { status: sStatus.value })), "Status alterado.", id);
+      const l1 = el("div", "linha-acao");
+      l1.appendChild(sStatus);
+      l1.appendChild(bStatus);
+
+      const sTec = selecao(tecnicos.map(t => [t.id, t.nome]), c.tecnicoId);
+      const bTec = el("button", "btn btn-primario", "Atribuir técnico");
+      if (!tecnicos.length) bTec.disabled = true;
+      bTec.onclick = () => agir(() => chamarApi("/chamados/" + id + "/atribuir",
+        enviarJson("PATCH", { tecnicoId: Number(sTec.value) })), "Técnico atribuído.", id);
+      const l2 = el("div", "linha-acao");
+      l2.appendChild(sTec);
+      l2.appendChild(bTec);
+
+      painel.appendChild(l1);
+      painel.appendChild(l2);
+    } else {
+      painel.appendChild(el("p", "vazio", "Chamado fechado: status e técnico não podem mais ser alterados."));
+    }
+
+    painel.appendChild(el("h3", "", "Comentários (" + d.comentarios.length + ")"));
+    if (!d.comentarios.length) painel.appendChild(el("p", "vazio", "Nenhum comentário ainda."));
+    d.comentarios.forEach(m => {
+      const caixa = el("div", "comentario");
+      caixa.appendChild(el("strong", "", m.autor));
+      caixa.appendChild(el("span", "data", dataBr(m.data)));
+      caixa.appendChild(el("p", "", m.texto));
+      painel.appendChild(caixa);
+    });
+
+    const autor = el("input");
+    autor.placeholder = "Seu nome";
+    const texto = el("textarea");
+    texto.placeholder = "Escreva um comentário...";
+    const bCom = el("button", "btn btn-primario", "Comentar");
+    bCom.onclick = () => {
+      if (!autor.value.trim() || !texto.value.trim()) { toast("Preencha o nome e o comentário.", true); return; }
+      agir(() => chamarApi("/chamados/" + id + "/comentarios",
+        enviarJson("POST", { autor: autor.value.trim(), texto: texto.value.trim() })), "Comentário adicionado.", id);
+    };
+    const bFechar = el("button", "btn btn-suave", "Fechar");
+    bFechar.onclick = () => fundoDet.classList.remove("aberto");
+    const rod = el("div", "rodape-modal");
+    rod.appendChild(bFechar);
+    rod.appendChild(bCom);
+    const formCom = el("div", "novo-comentario");
+    formCom.appendChild(autor);
+    formCom.appendChild(texto);
+    formCom.appendChild(rod);
+    painel.appendChild(formCom);
+  } catch (e) {
+    painel.textContent = "Não foi possível carregar o chamado: " + e.message;
   }
 }
 
